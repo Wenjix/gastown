@@ -295,8 +295,8 @@ var (
 	rigAddPrefix       string
 	rigAddLocalRepo    string
 	rigAddBranch       string
-	rigAddPushURL     string
-	rigAddUpstreamURL string
+	rigAddPushURL      string
+	rigAddUpstreamURL  string
 	rigAddAdopt        bool
 	rigAddAdoptURL     string
 	rigAddAdoptForce   bool
@@ -2115,32 +2115,4 @@ func isGitRemoteURL(s string) bool {
 		return true
 	}
 	return false
-}
-
-// parseGitHubOwnerRepo extracts owner and repo from a GitHub URL.
-func parseGitHubOwnerRepo(url string) (owner, repo string) {
-	url = strings.TrimSuffix(url, ".git")
-
-	// https://github.com/owner/repo
-	if strings.HasPrefix(url, "https://github.com/") {
-		parts := strings.Split(url[19:], "/")
-		if len(parts) >= 2 {
-			return parts[0], parts[1]
-		}
-	}
-
-	// git@github.com:owner/repo
-	if strings.HasPrefix(url, "git@github.com:") {
-		parts := strings.Split(url[15:], "/")
-		if len(parts) >= 2 {
-			return parts[0], parts[1]
-		}
-	}
-
-	return "", ""
-}
-
-// boolPtr returns a pointer to a bool value.
-func boolPtr(b bool) *bool {
-	return &b
 }

@@ -236,7 +236,6 @@ type trackedIssueInfo struct {
 	UpdatedAt    time.Time // Fallback for activity when no assignee
 }
 
-
 // getTrackedIssues fetches tracked issues for a convoy.
 func (f *LiveConvoyFetcher) getTrackedIssues(convoyID string) ([]trackedIssueInfo, error) {
 	// Query tracked dependencies using bd dep list
@@ -515,7 +514,7 @@ func (f *LiveConvoyFetcher) FetchMergeQueue() ([]MergeQueueRow, error) {
 
 	for rigName, entry := range rigsConfig.Rigs {
 		// Convert git URL to owner/repo format for gh CLI
-		repoPath := gitURLToRepoPath(entry.GitURL)
+		repoPath := GitURLToRepoPath(entry.GitURL)
 		if repoPath == "" {
 			continue
 		}
@@ -531,10 +530,10 @@ func (f *LiveConvoyFetcher) FetchMergeQueue() ([]MergeQueueRow, error) {
 	return result, nil
 }
 
-// gitURLToRepoPath converts a git URL to owner/repo format.
+// GitURLToRepoPath converts a git URL to owner/repo format.
 // Supports HTTPS (https://github.com/owner/repo.git) and
 // SSH (git@github.com:owner/repo.git) formats.
-func gitURLToRepoPath(gitURL string) string {
+func GitURLToRepoPath(gitURL string) string {
 	// Handle HTTPS format: https://github.com/owner/repo.git
 	if strings.HasPrefix(gitURL, "https://github.com/") {
 		path := strings.TrimPrefix(gitURL, "https://github.com/")

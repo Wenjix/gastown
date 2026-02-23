@@ -4,17 +4,18 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/steveyegge/gastown/internal/cli"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/steveyegge/gastown/internal/beads"
+	"github.com/steveyegge/gastown/internal/cli"
 	"github.com/steveyegge/gastown/internal/config"
 	"github.com/steveyegge/gastown/internal/constants"
 	"github.com/steveyegge/gastown/internal/deacon"
 	"github.com/steveyegge/gastown/internal/rig"
 	"github.com/steveyegge/gastown/internal/style"
+	"github.com/steveyegge/gastown/internal/web"
 )
 
 // MoleculeCurrentOutput represents the JSON output of bd mol current.
@@ -248,12 +249,12 @@ func outputDeaconPatrolContext(ctx RoleContext) {
 	}
 
 	cfg := PatrolConfig{
-		RoleName:        "deacon",
-		PatrolMolName:   "mol-deacon-patrol",
-		BeadsDir:        ctx.TownRoot, // Town-level role uses town root beads
-		Assignee:        "deacon",
-		HeaderEmoji:     "🔄",
-		HeaderTitle:     "Patrol Status (Wisp-based)",
+		RoleName:      "deacon",
+		PatrolMolName: "mol-deacon-patrol",
+		BeadsDir:      ctx.TownRoot, // Town-level role uses town root beads
+		Assignee:      "deacon",
+		HeaderEmoji:   "🔄",
+		HeaderTitle:   "Patrol Status (Wisp-based)",
 		WorkLoopSteps: []string{
 			"Check next step: `bd mol current`",
 			"Execute the step (heartbeat, mail, health checks, etc.)",
@@ -269,12 +270,12 @@ func outputDeaconPatrolContext(ctx RoleContext) {
 // Witness AUTO-BONDS its patrol molecule on startup if one isn't already running.
 func outputWitnessPatrolContext(ctx RoleContext) {
 	cfg := PatrolConfig{
-		RoleName:        "witness",
-		PatrolMolName:   "mol-witness-patrol",
-		BeadsDir:        ctx.WorkDir,
-		Assignee:        ctx.Rig + "/witness",
-		HeaderEmoji:     constants.EmojiWitness,
-		HeaderTitle:     "Witness Patrol Status",
+		RoleName:      "witness",
+		PatrolMolName: "mol-witness-patrol",
+		BeadsDir:      ctx.WorkDir,
+		Assignee:      ctx.Rig + "/witness",
+		HeaderEmoji:   constants.EmojiWitness,
+		HeaderTitle:   "Witness Patrol Status",
 		WorkLoopSteps: []string{
 			"Check inbox: `" + cli.Name() + " mail inbox`",
 			"Check next step: `bd mol current`",
@@ -291,13 +292,13 @@ func outputWitnessPatrolContext(ctx RoleContext) {
 // Refinery AUTO-BONDS its patrol molecule on startup if one isn't already running.
 func outputRefineryPatrolContext(ctx RoleContext) {
 	cfg := PatrolConfig{
-		RoleName:        "refinery",
-		PatrolMolName:   "mol-refinery-patrol",
-		BeadsDir:        ctx.WorkDir,
-		Assignee:        ctx.Rig + "/refinery",
-		HeaderEmoji:     "🔧",
-		HeaderTitle:     "Refinery Patrol Status",
-		ExtraVars:       buildRefineryPatrolVars(ctx),
+		RoleName:      "refinery",
+		PatrolMolName: "mol-refinery-patrol",
+		BeadsDir:      ctx.WorkDir,
+		Assignee:      ctx.Rig + "/refinery",
+		HeaderEmoji:   "🔧",
+		HeaderTitle:   "Refinery Patrol Status",
+		ExtraVars:     buildRefineryPatrolVars(ctx),
 		WorkLoopSteps: []string{
 			"Check inbox: `" + cli.Name() + " mail inbox`",
 			"Check next step: `bd mol current`",
@@ -330,6 +331,15 @@ func buildRefineryPatrolVars(ctx RoleContext) []string {
 		defaultBranch = rigCfg.DefaultBranch
 	}
 	vars = append(vars, fmt.Sprintf("target_branch=%s", defaultBranch))
+
+	// Auto-detect upstream_repo from rig config for fork workflow formulas.
+	// This allows users to run 'gt patrol new --formula mol-refinery-patrol-fork'
+	// without manually passing --vars upstream_repo=owner/repo.
+	if rigCfg != nil && rigCfg.UpstreamURL != "" {
+		if upstreamRepo := web.GitURLToRepoPath(rigCfg.UpstreamURL); upstreamRepo != "" {
+			vars = append(vars, fmt.Sprintf("upstream_repo=%s", upstreamRepo))
+		}
+	}
 
 	// MQ-specific vars require settings/config.json with a merge_queue section
 	settingsPath := filepath.Join(rigPath, "settings", "config.json")
